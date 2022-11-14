@@ -19,7 +19,7 @@ export const HeaderView: React.FC<HeaderViewProps> = props => {
 
     const { t } = useTranslation();
     return (
-        <Stack horizontal={true} className={className ? className : ""}>
+        <Stack horizontal={true} className={className ? className : ''}>
             <Stack.Item align="start">
                 <h3>{t(headerText)}</h3>
             </Stack.Item>
@@ -33,7 +33,7 @@ export const HeaderView: React.FC<HeaderViewProps> = props => {
                                     href={t(link)}
                                     target="_blank"
                                 >
-                                    {t(tooltip)}
+                                    {t(tooltip)
                                 </Link> :
                                 t(tooltip)
                         }
