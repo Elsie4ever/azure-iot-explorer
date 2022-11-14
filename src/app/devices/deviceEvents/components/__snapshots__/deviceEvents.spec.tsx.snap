@@ -6,18 +6,18 @@ exports[`deviceEvents deviceEvents in non-pnp context matches snapshot 1`] = `
   key="device-events"
 >
   <Commands
-    dispatch={[MockFunction]}
     fetchData={[Function]}
     monitoringData={false}
     setMonitoringData={[Function]}
+    setShowContentTypePanel={[Function]}
     setShowPnpModeledEvents={[Function]}
     setShowSimulationPanel={[Function]}
     setShowSystemProperties={[Function]}
+    showContentTypePanel={false}
     showPnpModeledEvents={false}
     showSimulationPanel={false}
     showSystemProperties={false}
     startDisabled={false}
-    synchronizationStatus={1}
   />
   <HeaderView
     headerText="deviceEvents.headerText"
@@ -55,11 +55,15 @@ exports[`deviceEvents deviceEvents in non-pnp context matches snapshot 1`] = `
     onToggleSimulationPanel={[Function]}
     showSimulationPanel={false}
   />
+  <DeviceContentTypePanel
+    onToggleContentTypePanel={[Function]}
+    showContentTypePanel={false}
+  />
   <div
     className="device-events-container"
   >
     <div
-      className="scrollable-telemetry"
+      className=""
     >
       <article
         className="device-events-content"
@@ -92,18 +96,18 @@ exports[`deviceEvents deviceEvents in pnp context matches snapshot while interfa
   key="device-events"
 >
   <Commands
-    dispatch={[Function]}
     fetchData={[Function]}
     monitoringData={false}
     setMonitoringData={[Function]}
+    setShowContentTypePanel={[Function]}
     setShowPnpModeledEvents={[Function]}
     setShowSimulationPanel={[Function]}
     setShowSystemProperties={[Function]}
+    showContentTypePanel={false}
     showPnpModeledEvents={true}
     showSimulationPanel={false}
     showSystemProperties={false}
     startDisabled={false}
-    synchronizationStatus={2}
   />
   <HeaderView
     headerText="deviceEvents.headerText"
@@ -141,11 +145,15 @@ exports[`deviceEvents deviceEvents in pnp context matches snapshot while interfa
     onToggleSimulationPanel={[Function]}
     showSimulationPanel={false}
   />
+  <DeviceContentTypePanel
+    onToggleContentTypePanel={[Function]}
+    showContentTypePanel={false}
+  />
   <div
     className="device-events-container"
   >
     <div
-      className="scrollable-telemetry"
+      className=""
     />
   </div>
 </Stack>
@@ -157,18 +165,18 @@ exports[`deviceEvents deviceEvents in pnp context matches snapshot while interfa
   key="device-events"
 >
   <Commands
-    dispatch={[Function]}
     fetchData={[Function]}
     monitoringData={false}
     setMonitoringData={[Function]}
+    setShowContentTypePanel={[Function]}
     setShowPnpModeledEvents={[Function]}
     setShowSimulationPanel={[Function]}
     setShowSystemProperties={[Function]}
+    showContentTypePanel={false}
     showPnpModeledEvents={true}
     showSimulationPanel={false}
     showSystemProperties={false}
     startDisabled={false}
-    synchronizationStatus={2}
   />
   <HeaderView
     headerText="deviceEvents.headerText"
@@ -206,11 +214,15 @@ exports[`deviceEvents deviceEvents in pnp context matches snapshot while interfa
     onToggleSimulationPanel={[Function]}
     showSimulationPanel={false}
   />
+  <DeviceContentTypePanel
+    onToggleContentTypePanel={[Function]}
+    showContentTypePanel={false}
+  />
   <div
     className="device-events-container"
   >
     <div
-      className="scrollable-telemetry"
+      className=""
     />
   </div>
 </Stack>

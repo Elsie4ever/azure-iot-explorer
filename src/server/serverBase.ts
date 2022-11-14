@@ -13,6 +13,7 @@ import { Client as HubClient } from 'azure-iothub';
 import { Message as CloudToDeviceMessage } from 'azure-iot-common';
 import { EventHubClient, EventPosition, ReceiveHandler } from '@azure/event-hubs';
 import { generateDataPlaneRequestBody, generateDataPlaneResponse } from './dataPlaneHelper';
+import { convertIotHubToEventHubsConnectionString } from './eventHubHelper';
 
 const SERVER_ERROR = 500;
 const BAD_REQUEST = 400;
@@ -330,12 +331,22 @@ export const addPropertiesToCloudToDeviceMessage = (message: CloudToDeviceMessag
 };
 
 export const eventHubProvider = async (params: any) =>  {
+    await initializeEventHubClient(params);
+    updateEntityIdIfNecessary(params);
+
+    return listeningToMessages(params);
+};
+
+const initializeEventHubClient = async (params: any) =>  {
     if (needToCreateNewEventHubClient(params))
     {
-        // hub has changed, reinitialize client, receivers and mesages
-        client = params.customEventHubConnectionString ?
-            await EventHubClient.createFromConnectionString(params.customEventHubConnectionString, params.customEventHubName) :
-            await EventHubClient.createFromIotHubConnectionString(params.hubConnectionString);
+        // hub has changed, reinitialize client, receivers and messages
+        if (params.customEventHubConnectionString) {
+            client = await EventHubClient.createFromConnectionString(params.customEventHubConnectionString, params.customEventHubName);
+        }
+        else {
+            client = await EventHubClient.createFromConnectionString(await convertIotHubToEventHubsConnectionString(params.hubConnectionString));
+        }
 
         connectionString = params.customEventHubConnectionString ?
             `${params.customEventHubConnectionString}/${params.customEventHubName}` :
@@ -343,12 +354,9 @@ export const eventHubProvider = async (params: any) =>  {
         receivers = [];
         messages = [];
     }
-    updateEntityIdIfNecessary(params);
-
-    return listeningToMessages(client, params);
 };
 
-const listeningToMessages = async (eventHubClient: EventHubClient, params: any) => {
+const listeningToMessages = async (params: any) => {
     if (params.startListeners || !receivers) {
         const partitionIds = await client.getPartitionIds();
         const hubInfo = await client.getHubRuntimeInformation();
@@ -362,7 +370,7 @@ const listeningToMessages = async (eventHubClient: EventHubClient, params: any) 
                 name: `${hubInfo.path}_${partitionId}`,
             };
 
-            const receiver = eventHubClient.receive(
+            const receiver = client.receive(
                 partitionId,
                 onMessageReceived,
                 (err: object) => {},
@@ -378,12 +386,12 @@ const handleMessages = () => {
     let results: Message[] = [];
     messages.forEach(message => {
         if (!results.some(result => result.systemProperties?.['x-opt-sequence-number'] === message.systemProperties?.['x-opt-sequence-number'])) {
-            // if user click stop/start too refrequently, it's possible duplicate receivers are created before the cleanup happens as it's async
+            // if user click stop/start too frequently, it's possible duplicate receivers are created before the cleanup happens as it's async
             // remove duplicate messages before proper cleanup is finished
             results.push(message);
         }
     })
-    messages = []; // empty the array everytime the result is returned
+    messages = []; // empty the array every time the result is returned
     return results;
 }
 

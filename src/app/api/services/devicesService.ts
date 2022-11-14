@@ -3,6 +3,7 @@
  * Licensed under the MIT License
  **********************************************************/
 import {
+    CloudToDeviceMessageParameters,
     FetchDeviceTwinParameters,
     InvokeMethodParameters,
     FetchDevicesParameters,
@@ -10,8 +11,7 @@ import {
     FetchDeviceParameters,
     DeleteDevicesParameters,
     AddDeviceParameters,
-    UpdateDeviceParameters,
-    CloudToDeviceMessageParameters
+    UpdateDeviceParameters
 } from '../parameters/deviceParameters';
 import {
     HEADERS,
@@ -23,8 +23,11 @@ import { Message } from '../models/messages';
 import { Twin, Device, DataPlaneResponse } from '../models/device';
 import { DeviceIdentity } from '../models/deviceIdentity';
 import { dataPlaneConnectionHelper, dataPlaneResponseHelper, request, DATAPLANE_CONTROLLER_ENDPOINT, DataPlaneRequest } from './dataplaneServiceHelper';
-import { getDeviceInterface, getEventHubInterface } from '../shared/interfaceUtils';
+import { getEventHubInterface } from '../shared/interfaceUtils';
 import { parseEventHubMessage } from './eventHubMessageHelper';
+import { HttpError } from '../models/httpError';
+import { AppInsightsClient } from '../../shared/appTelemetry/appInsightsClient';
+import { TELEMETRY_EVENTS } from '../../constants/telemetry';
 
 const PAGE_SIZE = 100;
 
@@ -99,16 +102,30 @@ export const invokeDirectMethod = async (parameters: InvokeMethodParameters): Pr
     return result && result.body;
 };
 
-export const cloudToDeviceMessage = async (parameters: CloudToDeviceMessageParameters) => {
+export const cloudToDeviceMessage = async (params: CloudToDeviceMessageParameters) => {
+    const { deviceId, body, properties } = params;
     const connectionInfo = await dataPlaneConnectionHelper();
-    const api = getDeviceInterface();
+    const authorization = connectionInfo.sasToken;
+    const uri = `https://${connectionInfo.connectionInfo.hostName}/devices/${encodeURIComponent(deviceId)}/messages/deviceBound?api-version=${HUB_DATA_PLANE_API_VERSION}`;
 
-    await api.sendMessageToDevice({
-        connectionString: connectionInfo.connectionString,
-        deviceId: parameters.deviceId,
-        messageBody: parameters.body,
-        messageProperties: parameters.properties
-    });
+    const formattedProperties: Record<string, string> = {};
+    properties.forEach(s => formattedProperties[`iothub-app-${s.key}`] = s.value);
+
+    const requestParams: RequestInit = {
+        body,
+        cache: 'no-cache',
+        headers: {
+            ...formattedProperties,
+            authorization,
+            ['Content-Encoding']: 'utf-8'
+        },
+        method: HTTP_OPERATION_TYPES.Post
+    };
+
+    const response = await fetch(uri, requestParams);
+    if (!response.ok) {
+        throw new HttpError(response.status);
+    }
 };
 
 export const addDevice = async (parameters: AddDeviceParameters): Promise<DeviceIdentity> => {
@@ -173,6 +190,7 @@ export const fetchDevice = async (parameters: FetchDeviceParameters): Promise<De
     return result && result.body;
 };
 
+// tslint:disable-next-line:cyclomatic-complexity
 export const fetchDevices = async (parameters: FetchDevicesParameters): Promise<DataPlaneResponse<Device[]>> => {
     const connectionInformation = await dataPlaneConnectionHelper();
     const queryString = buildQueryString(parameters.query);
@@ -195,9 +213,15 @@ export const fetchDevices = async (parameters: FetchDevicesParameters): Promise<
         (dataPlaneRequest.headers as any)[HEADERS.CONTINUATION_TOKEN] = parameters.query.continuationTokens[parameters.query.currentPageIndex]; // tslint:disable-line: no-any
     }
 
-    const response = await request(DATAPLANE_CONTROLLER_ENDPOINT, dataPlaneRequest);
-    const result = await dataPlaneResponseHelper(response);
-    return result;
+    try {
+        const response = await request(DATAPLANE_CONTROLLER_ENDPOINT, dataPlaneRequest);
+        AppInsightsClient.getInstance()?.trackEvent({name: TELEMETRY_EVENTS.FETCH_DEVICES}, {status: response.status.toString(), statusText: response.statusText});
+        const result = await dataPlaneResponseHelper(response);
+        return result;
+    } catch (e) {
+        AppInsightsClient.getInstance()?.trackEvent({name: TELEMETRY_EVENTS.FETCH_DEVICES}, {status: 'N/A', statusText: e.toString()});
+        throw (e);
+    }
 };
 
 export const deleteDevices = async (parameters: DeleteDevicesParameters) => {
@@ -246,7 +270,7 @@ export const monitorEvents = async (parameters: MonitorEventsParameters): Promis
 
     const api = getEventHubInterface();
     const result = await api.startEventHubMonitoring(requestParameters);
-    return result && result.length && result.length !== 0 && result.map(message => parseEventHubMessage(message)) || [];
+    return result && result.length && result.length !== 0 && Promise.all(result.map(message => parseEventHubMessage(message, parameters.decoderPrototype)) || []);
 };
 
 export const stopMonitoringEvents = async (): Promise<void> => {
