@@ -1,0 +1,24 @@
+{
+	"name": "Node.js & TypeScript",
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:16-bullseye",
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"sshd": "latest"
+	},
+	"onCreateCommand": "sudo apt-get update && sudo apt-get -y install git libx11-xcb1 libxcb-dri3-0 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libxss1 libasound2 libdrm-dev libgbm-dev xauth",
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "bash .devcontainer/postCreateCommand.sh"
+		// "sudo chown root /workspaces/azure-iot-explorer/node_modules/electron/dist/chrome-sandbox",
+		// "sudo chmod 4755 /workspaces/azure-iot-explorer/node_modules/electron/dist/chrome-sandbox"]
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
