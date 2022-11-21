@@ -43,7 +43,7 @@
     "localization": "tsc ./scripts/composeLocalizationKeys.ts --skipLibCheck && node ./scripts/composeLocalizationKeys.js",
     "import-semantic-units": "tsc ./scripts/importSemanticUnitTypes.ts --skipLibCheck && node ./scripts/importSemanticUnitTypes.js",
     "docker": "docker pull electronuserland/electron-builder && docker run --rm -ti --mount source=$(pwd),target=/project,type=bind electronuserland/electron-builder:latest",
-    "electron": "electron . --no-sandbox",
+    "electron": "electron .",
     "electronNoSandbox": "electron . --no-sandbox",
     "electron:compile": "tsc --project ./public/tsconfig.json",
     "package:win": "npm run clean && npm ci && npm rebuild sass && npm run build && electron-builder -w",
